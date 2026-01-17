@@ -53,10 +53,10 @@ pub const PosixTty = struct {
     /// sure to register a callback when initializing the event loop
     pub fn init(buffer: []u8) !PosixTty {
         // Open our tty
-        const fd = try posix.open("/dev/tty", .{ .ACCMODE = .RDWR }, 0);
+        const file = std.fs.File.stdout();
 
         // Set the termios of the tty
-        const termios = try makeRaw(fd);
+        const termios = try makeRaw(file.handle);
 
         var act = posix.Sigaction{
             .handler = .{ .handler = PosixTty.handleWinch },
@@ -69,10 +69,8 @@ pub const PosixTty = struct {
         posix.sigaction(posix.SIG.WINCH, &act, null);
         handler_installed = true;
 
-        const file = std.fs.File{ .handle = fd };
-
         const self: PosixTty = .{
-            .fd = fd,
+            .fd = file.handle,
             .termios = termios,
             .tty_writer = .initStreaming(file, buffer),
         };
