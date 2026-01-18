@@ -79,6 +79,8 @@ pub const WidthStyle = union(enum) {
     dynamic_fill,
     /// Dynamically calculate the Column Width for each Column based on its Header Length and the provided Padding length.
     dynamic_header_len: u16,
+    /// Dynamically calculate the Column Width for each Column based on its proportion value.
+    dynamic_proportions: []const u16,
     /// Statically set all Column Widths to the same value.
     static_all: u16,
     /// Statically set individual Column Widths to specific values.
@@ -401,6 +403,17 @@ pub fn calcColWidth(
         .dynamic_header_len => dynHdrs: {
             if (col >= headers.len) break :dynHdrs error.NotEnoughStaticWidthsProvided;
             break :dynHdrs @as(u16, @intCast(headers[col].len)) + (style.dynamic_header_len * 2);
+        },
+        .dynamic_proportions => dynProp: {
+            if (col >= headers.len) break :dynProp error.NotEnoughStaticWidthsProvided;
+            const sum = calcSum: {
+                var result: u16 = 0;
+                for (style.dynamic_proportions) |value| result +|= value;
+                break :calcSum result;
+            };
+            const cw = style.dynamic_proportions[col] * (table_win.width / sum);
+            const rem = table_win.width % sum;
+            break :dynProp if (col == 0) cw +| rem else cw;
         },
         .static_all => style.static_all,
         .static_individual => statInd: {
