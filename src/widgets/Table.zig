@@ -19,6 +19,8 @@ pub const TableContext = struct {
 
     /// Active status of the Table.
     active: bool = false,
+    /// Show active header column.
+    active_col: bool = true,
     /// Active Content Callback Function.
     /// If available, this will be called to vertically expand the active row with additional info.
     active_content_fn: ?*const fn (*vaxis.Window, *const anyopaque) anyerror!u16 = null,
@@ -229,7 +231,7 @@ pub fn drawTable(
         );
         defer col_start += col_width;
         const hdr_fg, const hdr_bg = hdrColors: {
-            if (table_ctx.active and idx == table_ctx.col)
+            if (table_ctx.active and table_ctx.active_col and idx == table_ctx.col)
                 break :hdrColors .{ table_ctx.active_fg, table_ctx.active_bg }
             else if (idx % 2 == 0)
                 break :hdrColors .{ .default, table_ctx.hdr_bg_1 }
